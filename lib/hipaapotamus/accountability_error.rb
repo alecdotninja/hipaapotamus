@@ -1,0 +1,2 @@
+class AccountabilityError < StandardError
+end
