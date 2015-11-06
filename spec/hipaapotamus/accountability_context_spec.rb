@@ -25,6 +25,12 @@ describe Hipaapotamus::AccountabilityContext do
           expect(accountability_context_within_block).to eq accountability_context
         end
       end
+
+      context 'without a valid agent' do
+        it 'raises an AccountabilityError' do
+          expect { Hipaapotamus::AccountabilityContext.new(protected) }.to raise_error(AccountabilityError)
+        end
+      end
     end
 
     describe '#record_access' do
@@ -77,9 +83,7 @@ describe Hipaapotamus::AccountabilityContext do
 
       context 'outside of an accountability_context' do
         it 'raises an AccountabilityError' do
-          expect do
-            Hipaapotamus::AccountabilityContext.current!
-          end.to raise_error(AccountabilityError)
+          expect { Hipaapotamus::AccountabilityContext.current! }.to raise_error(AccountabilityError)
         end
       end
     end

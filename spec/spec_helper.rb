@@ -21,6 +21,7 @@ ActiveRecord::Base.establish_connection(adapter: 'sqlite3', database: ':memory:'
 
 ActiveRecord::Base.connection.execute 'CREATE TABLE "users" ("id" INTEGER PRIMARY KEY)'
 class User < ActiveRecord::Base
+  include Hipaapotamus::Agent
 end
 
 ActiveRecord::Base.connection.execute 'CREATE TABLE "medical_secrets" ("id" INTEGER PRIMARY KEY)'

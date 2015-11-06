@@ -9,6 +9,8 @@ module Hipaapotamus
     attr_reader :agent, :accessed_records
 
     def initialize(agent)
+      raise AccountabilityError, 'Cannot create AccountabilityContext without valid Agent' unless agent.is_a? Agent
+
       @agent = agent
       @accessed_records = []
 
