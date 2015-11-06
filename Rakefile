@@ -9,3 +9,6 @@ task :console do
   require 'pry'
   Pry.start
 end
+
+# For travis
+task default: :test
