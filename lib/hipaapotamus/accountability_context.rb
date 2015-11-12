@@ -4,8 +4,6 @@ module Hipaapotamus
   class AccountabilityContext
     THREAD_STORAGE_KEY = :hipaapotamus_active_accountability_context
 
-    # Instance Methods
-
     attr_reader :agent, :accessed_records
 
     def initialize(agent)
@@ -32,14 +30,14 @@ module Hipaapotamus
       end
     end
 
-    # Class methods
+    class << self
+      def current
+        Thread.current[THREAD_STORAGE_KEY]
+      end
 
-    def self.current
-      Thread.current[THREAD_STORAGE_KEY]
-    end
-
-    def self.current!
-      current || raise(AccountabilityError, 'Not within an AccountabilityContext')
+      def current!
+        current || raise(AccountabilityError, 'Not within an AccountabilityContext')
+      end
     end
   end
 end
