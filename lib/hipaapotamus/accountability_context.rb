@@ -4,22 +4,25 @@ module Hipaapotamus
   class AccountabilityContext
     THREAD_STORAGE_KEY = :hipaapotamus_active_accountability_context
 
-    attr_reader :agent, :touches
+    attr_reader :agent, :actions
 
     def initialize(agent)
       raise AccountabilityError, 'Cannot create AccountabilityContext without a valid Agent' unless agent.is_a? Agent
 
       @agent = agent
-      @touches = []
+      @actions = []
 
       within { yield(self) } if block_given?
     end
 
-    def touch(record, action)
-      @touches << {
-        record: record,
-        action: action,
-        time: Time.now
+    def act(protected, action_type)
+      @actions << {
+        protected_id: protected.id,
+        protected_type: protected.class.name,
+        protected_attributes: protected.attributes,
+
+        action_type: action_type,
+        performed_at: DateTime.now
       }
     end
 

@@ -29,7 +29,7 @@ module Hipaapotamus
 
           policy_class!.authorize!(accountability_context.agent, self, :access)
 
-          accountability_context.touch(self, :access)
+          accountability_context.act(self, :access)
         end
       end
 
@@ -38,7 +38,7 @@ module Hipaapotamus
         action = new_record? ? :create : :update
 
         policy_class!.authorize!(accountability_context.agent, self, action)
-        accountability_context.touch(self, action)
+        accountability_context.act(self, action)
       end
 
       before_destroy do
@@ -46,7 +46,7 @@ module Hipaapotamus
           accountability_context = AccountabilityContext.current!
 
           policy_class!.authorize!(accountability_context, self, :destroy)
-          accountability_context.touch(self, :destroy)
+          accountability_context.act(self, :destroy)
         end
       end
     end
@@ -55,6 +55,7 @@ module Hipaapotamus
       if new_record?
         "a new #{self.class.name}"
       else
+
         "#{self.class.name}(#{self.class.primary_key}=#{self[self.class.primary_key]})"
       end
     end

@@ -11,8 +11,8 @@ describe Hipaapotamus::AccountabilityContext do
       expect(accountability_context.agent).to eq agent
     end
 
-    it 'has no touched records' do
-      expect(accountability_context.touches).to be_empty
+    it 'has no actions' do
+      expect(accountability_context.actions).to be_empty
     end
 
     context 'with a block' do
@@ -33,11 +33,11 @@ describe Hipaapotamus::AccountabilityContext do
     end
   end
 
-  describe '#touch' do
-    it 'stores a passed in record in touches' do
-      accountability_context.touch(protected, :derp)
+  describe '#act' do
+    it 'stores a passed in record in actions' do
+      accountability_context.act(protected, :derp)
 
-      expect(accountability_context.touches.map { |h| h.slice(:record, :action) }).to include(record: protected, action: :derp)
+      expect(accountability_context.actions.map { |h| h.slice(:protected_id, :protected_type) }).to include(protected_id: protected.id, protected_type: protected.class.name)
     end
   end
 
