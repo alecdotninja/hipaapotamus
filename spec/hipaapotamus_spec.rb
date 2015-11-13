@@ -20,4 +20,27 @@ describe Hipaapotamus do
       Hipaapotamus.current_agent
     end
   end
+
+  describe '.with_accountability' do
+    let(:agent) { User.create! }
+
+    it 'evaluates a block in an AccountabilityContext with the provided agent' do
+      Hipaapotamus.with_accountability(agent) do
+        expect(Hipaapotamus::AccountabilityContext.current.agent).to eq agent
+      end
+    end
+  end
+
+  describe '.without_accountability' do
+    let(:anonymous_agent) { Hipaapotamus::AnonymousAgent.instance }
+
+    it 'evaluates a block in an AccountabilityContext with the anonymous agent' do
+      expect(Hipaapotamus).to receive(:with_accountability).with(anonymous_agent)
+
+      Hipaapotamus.without_accountability do
+        # tested in .with_accountability
+      end
+    end
+  end
+
 end

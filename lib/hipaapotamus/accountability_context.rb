@@ -4,19 +4,23 @@ module Hipaapotamus
   class AccountabilityContext
     THREAD_STORAGE_KEY = :hipaapotamus_active_accountability_context
 
-    attr_reader :agent, :accessed_records
+    attr_reader :agent, :touches
 
     def initialize(agent)
-      raise AccountabilityError, 'Cannot create AccountabilityContext without valid Agent' unless agent.is_a? Agent
+      raise AccountabilityError, 'Cannot create AccountabilityContext without a valid Agent' unless agent.is_a? Agent
 
       @agent = agent
-      @accessed_records = []
+      @touches = []
 
       within { yield(self) } if block_given?
     end
 
-    def record_access(record)
-      @accessed_records << record
+    def touch(record, action)
+      @touches << {
+        record: record,
+        action: action,
+        time: Time.now
+      }
     end
 
     def within

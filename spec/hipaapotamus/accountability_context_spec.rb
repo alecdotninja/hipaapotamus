@@ -1,17 +1,18 @@
+require 'active_support/core_ext/hash/slice'
 require 'spec_helper'
 
 describe Hipaapotamus::AccountabilityContext do
   let(:agent) { User.create! }
   let(:accountability_context) { Hipaapotamus::AccountabilityContext.new(agent) }
-  let(:protected) { MedicalSecret.create! }
+  let(:protected) { Hipaapotamus.without_accountability { MedicalSecret.create! } }
 
   describe '#initialize' do
     it 'has a passed in agent' do
       expect(accountability_context.agent).to eq agent
     end
 
-    it 'has no accessed records' do
-      expect(accountability_context.accessed_records).to be_empty
+    it 'has no touched records' do
+      expect(accountability_context.touches).to be_empty
     end
 
     context 'with a block' do
@@ -32,10 +33,11 @@ describe Hipaapotamus::AccountabilityContext do
     end
   end
 
-  describe '#record_access' do
-    it 'stores a passed in record in accessed_records' do
-      accountability_context.record_access(protected)
-      expect(accountability_context.accessed_records).to include(protected)
+  describe '#touch' do
+    it 'stores a passed in record in touches' do
+      accountability_context.touch(protected, :derp)
+
+      expect(accountability_context.touches.map { |h| h.slice(:record, :action) }).to include(record: protected, action: :derp)
     end
   end
 

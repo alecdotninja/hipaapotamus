@@ -6,7 +6,11 @@ module Hipaapotamus
     extend ActiveSupport::Concern
 
     def with_accountability(&block)
-      AccountabilityContext.new(self, &block)
+      Hipaapotamus.with_accountability(self, &block)
+    end
+
+    def hipaapotamus_display_name
+      'This agent'
     end
   end
 end
