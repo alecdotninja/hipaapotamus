@@ -33,7 +33,7 @@ module Hipaapotamus
         end
       end
 
-      before_save do
+      after_save do
         accountability_context = AccountabilityContext.current!
         action = new_record? ? :create : :update
 
@@ -41,7 +41,7 @@ module Hipaapotamus
         accountability_context.act(self, action)
       end
 
-      before_destroy do
+      after_destroy do
         unless new_record?
           accountability_context = AccountabilityContext.current!
 

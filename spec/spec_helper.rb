@@ -19,6 +19,8 @@ end
 
 ActiveRecord::Base.establish_connection(adapter: 'sqlite3', database: ':memory:')
 
+ActiveRecord::Base.connection.execute 'CREATE TABLE hipaapotamus_actions (id integer PRIMARY KEY NOT NULL, agent_id integer, agent_type character varying NOT NULL, protected_id integer NOT NULL, protected_type character varying NOT NULL, protected_attributes text NOT NULL, action_type integer NOT NULL, performed_at timestamp without time zone NOT NULL, created_at timestamp without time zone NOT NULL);'
+
 ActiveRecord::Base.connection.execute 'CREATE TABLE "users" ("id" INTEGER PRIMARY KEY)'
 class User < ActiveRecord::Base
   include Hipaapotamus::Agent
