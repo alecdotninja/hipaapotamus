@@ -1,6 +1,7 @@
 require 'active_record'
 require 'hipaapotamus/accountability_error'
 require 'hipaapotamus/accountability_context'
+require 'hipaapotamus/execution'
 require 'hipaapotamus/agent'
 require 'hipaapotamus/policy'
 require 'hipaapotamus/action'
@@ -20,57 +21,46 @@ module Hipaapotamus
     end
 
     def with_accountability(agent)
-      return_value = nil
-      raise_value = nil
-      commits = false
+      executiton = nil
 
-      ActiveRecord::Base.transaction do
+      ActiveRecord::Base.transaction(requires_new: true) do
         accountability_context = AccountabilityContext.new(agent) do
-          ActiveRecord::Base.transaction do
-            begin
-              return_value = yield
-              commits = true
-            rescue ActiveRecord::Rollback
-              raise ActiveRecord::Rollback
-            rescue Exception => e
-              raise_value = e
-              raise ActiveRecord::Rollback
+          ActiveRecord::Base.transaction(requires_new: true) do
+            executiton = Execution.new do
+              yield
             end
+
+            raise ActiveRecord::Rollback if executiton.raised?
           end
         end
 
-        action_attributes = []
+        Action.bulk_insert(
+          accountability_context.actions.map do |action|
+            {
+              agent_id: agent.try(:id),
+              agent_type: agent.class.name,
+              protected_id: action[:protected_id],
+              protected_type: action[:protected_type],
+              protected_attributes: action[:protected_attributes].to_json,
 
-        accountability_context.actions.each do |action|
-          action_attributes << {
-            agent_id: agent.try(:id),
-            agent_type: agent.class.name,
-            protected_id: action[:protected_id],
-            protected_type: action[:protected_type],
-            protected_attributes: action[:protected_attributes].to_json,
-
-            action_type: Action.action_types[
-              if action[:action_type] == :create
-                'create'
-              else
-                if commits
-                  "committed_#{action[:action_type]}"
+              action_type: Action.action_types[
+                if action[:action_type] == :create
+                  'create'
                 else
-                  "reverted_#{action[:action_type]}"
+                  if executiton.raised?
+                    "committed_#{action[:action_type]}"
+                  else
+                    "reverted_#{action[:action_type]}"
+                  end
                 end
-              end
-            ],
-            performed_at: action[:performed_at]
-          }
-        end
-
-        if action_attributes.count > 0
-          Action.bulk_insert(action_attributes)
-        end
+              ],
+              performed_at: action[:performed_at]
+            }
+          end
+        )
       end
 
-      raise raise_value if raise_value
-      return_value
+      executiton.try(:value)
     end
 
     def without_accountability(&block)

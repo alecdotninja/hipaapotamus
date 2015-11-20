@@ -17,27 +17,29 @@ module Hipaapotamus
 
     class << self
       def bulk_insert(attributeses)
-        now = DateTime.now
+        if attributeses.length > 0
+          now = DateTime.now
 
-        attributeses.each { |attributes| attributes[:created_at] = now } if self.column_names.include?('created_at')
-        attributeses.each { |attributes| attributes[:updated_at] = now } if self.column_names.include?('updated_at')
+          attributeses.each { |attributes| attributes[:created_at] = now } if self.column_names.include?('created_at')
+          attributeses.each { |attributes| attributes[:updated_at] = now } if self.column_names.include?('updated_at')
 
-        uniq_keys = attributeses.map { |attributes| attributes.keys }.flatten(1).uniq
+          uniq_keys = attributeses.map { |attributes| attributes.keys }.flatten(1).uniq
 
-        column_names = uniq_keys.map(&:to_s)
-        rows = attributeses.map { |attributes| uniq_keys.map { |key| attributes[key] } }
+          column_names = uniq_keys.map(&:to_s)
+          rows = attributeses.map { |attributes| uniq_keys.map { |key| attributes[key] } }
 
-        value_template = "(#{column_names.map{'?'}.join(', ')})"
+          value_template = "(#{column_names.map{'?'}.join(', ')})"
 
-        value_clauses = rows.map { |values| sanitize_sql_array([value_template, *values]) }
-        values_clause = value_clauses.join(', ')
+          value_clauses = rows.map { |values| sanitize_sql_array([value_template, *values]) }
+          values_clause = value_clauses.join(', ')
 
-        column_clauses = column_names.map { |column_name| connection.quote_column_name(column_name) }
-        columns_clause = "#{connection.quote_column_name(table_name)} (#{column_clauses.join(', ')})"
+          column_clauses = column_names.map { |column_name| connection.quote_column_name(column_name) }
+          columns_clause = "#{connection.quote_column_name(table_name)} (#{column_clauses.join(', ')})"
 
-        insert_statement = "INSERT INTO #{columns_clause} VALUES #{values_clause};"
+          insert_statement = "INSERT INTO #{columns_clause} VALUES #{values_clause};"
 
-        connection.execute(insert_statement)
+          connection.execute(insert_statement)
+        end
       end
     end
 
