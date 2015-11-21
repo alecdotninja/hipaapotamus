@@ -29,24 +29,33 @@ module Hipaapotamus
 
           policy_class!.authorize!(accountability_context.agent, self, :access)
 
-          accountability_context.act(self, :access)
+          accountability_context.record_action(self, :access)
         end
       end
 
-      after_save do
+      after_create do
         accountability_context = AccountabilityContext.current!
-        action = new_record? ? :create : :update
 
-        policy_class!.authorize!(accountability_context.agent, self, action)
-        accountability_context.act(self, action)
+        policy_class!.authorize!(accountability_context.agent, self, :creation)
+
+        accountability_context.record_action(self, :creation)
+      end
+
+      after_update do
+        accountability_context = AccountabilityContext.current!
+
+        policy_class!.authorize!(accountability_context.agent, self, :modification)
+
+        accountability_context.record_action(self, :modification)
       end
 
       after_destroy do
         unless new_record?
           accountability_context = AccountabilityContext.current!
 
-          policy_class!.authorize!(accountability_context, self, :destroy)
-          accountability_context.act(self, :destroy)
+          policy_class!.authorize!(accountability_context, self, :destruction)
+
+          accountability_context.record_action(self, :destruction)
         end
       end
     end

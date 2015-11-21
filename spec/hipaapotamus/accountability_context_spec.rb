@@ -33,9 +33,9 @@ describe Hipaapotamus::AccountabilityContext do
     end
   end
 
-  describe '#act' do
+  describe '#record_action' do
     it 'stores a passed in record in actions' do
-      accountability_context.act(protected, :derp)
+      accountability_context.record_action(protected, :creation)
 
       expect(accountability_context.actions.map { |h| h.slice(:protected_id, :protected_type) }).to include(protected_id: protected.id, protected_type: protected.class.name)
     end

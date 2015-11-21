@@ -4,11 +4,12 @@ class CreateHipaapotamusActions < ActiveRecord::Migration
       t.integer :agent_id
       t.string :agent_type, null: false
 
-      t.integer :protected_id, null: false
+      t.integer :protected_id
       t.string :protected_type, null: false
-      t.json :protected_attributes, null: false
+      t.text :serialized_protected_attributes, null: false
 
       t.integer :action_type, null: false
+      t.boolean :action_completed, null: false
 
       t.datetime :performed_at, null: false
       t.datetime :created_at, null: false

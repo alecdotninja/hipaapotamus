@@ -15,15 +15,14 @@ module Hipaapotamus
       within { yield(self) } if block_given?
     end
 
-    def act(protected, action_type)
-      @actions << {
-        protected_id: protected.id,
-        protected_type: protected.class.name,
-        protected_attributes: protected.attributes,
-
+    # noinspection RubyArgCount
+    def record_action(protected, action_type)
+      @actions << Action.new(
+        agent: agent,
+        protected: protected,
         action_type: action_type,
         performed_at: DateTime.now
-      }
+      )
     end
 
     def within

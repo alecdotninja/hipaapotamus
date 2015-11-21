@@ -4,24 +4,80 @@ module Hipaapotamus
   class Action < ActiveRecord::Base
     self.table_name = 'hipaapotamus_actions'
 
-    belongs_to :agent, polymorphic: true
-    belongs_to :protected, polymorphic: true
+    enum action_type: { access: 0, creation: 1, modification: 2, destruction: 3 }
 
-    enum action_type: {
-      access: 0, committed_create: 1, committed_update: 2, committed_destroy: 3,
-      attempted_access: 4, attempted_create: 5, attempted_update: 6, attempted_destroy: 7,
-      reverted_update: 8, reverted_create: 9, reverted_destroy: 10
-    }
+    def agent_class
+      agent_type.try(:constantize)
+    end
+
+    def agent
+      if agent_class.is_a?(Singleton)
+        agent_class.instance
+      else
+        agent_class.find(agent_id)
+      end
+    end
+
+    def agent=(agent)
+      if agent.is_a? Singleton
+        self.agent_id = nil
+      else
+        self.agent_id = agent.id
+      end
+
+      self.agent_type = agent.class.name
+    end
+
+    def protected_class
+      protected_type.try(:constantize)
+    end
+
+    def protected
+      @protected ||= protected_class.new.tap do |protected|
+        if protected_id.present?
+          protected.id = protected_id
+          protected.reload unless destruction?
+        end
+
+        if protected_attributes.present?
+          protected.assign_attributes protected_attributes
+        end
+      end
+    end
+
+    def protected=(protected)
+      self.protected_id = protected.try(:id)
+      self.protected_type = protected.try(:class).try(:name)
+      self.protected_attributes = protected.try(:attributes)
+
+      @protected = protected
+    end
+
+    def protected_attributes
+      JSON.parse(serialized_protected_attributes) if serialized_protected_attributes.present?
+    end
+
+    def protected_attributes=(protected_attributes)
+      self.serialized_protected_attributes = protected_attributes.try(:to_json)
+    end
 
     validate :not_changed
+    validates :agent_type, :protected_type, :protected_attributes, :action_type, :performed_at, presence: true
+    validates :action_completed, inclusion: { in: [true, false] }
 
     class << self
-      def bulk_insert(attributeses)
-        if attributeses.length > 0
-          now = DateTime.now
+      def bulk_insert(actions)
+        if actions.length > 0
+          actions.each do |action|
+            raise ActiveRecord::RecordInvalid, 'unable to modify existing actions' unless action.new_record?
+            raise ActiveRecord::RecordInvalid, action.errors.full_messages.to_sentence unless action.valid?
+          end
 
-          attributeses.each { |attributes| attributes[:created_at] = now } if self.column_names.include?('created_at')
-          attributeses.each { |attributes| attributes[:updated_at] = now } if self.column_names.include?('updated_at')
+          attributeses = actions.map(&:attributes)
+
+          now = DateTime.now
+          attributeses.each { |attributes| attributes['created_at'] = now } if self.column_names.include?('created_at')
+          attributeses.each { |attributes| attributes['updated_at'] = now } if self.column_names.include?('updated_at')
 
           uniq_keys = attributeses.map { |attributes| attributes.keys }.flatten(1).uniq
 

@@ -1,4 +1,5 @@
 $LOAD_PATH.unshift File.expand_path('../../lib', __FILE__)
+require 'pry'
 require 'hipaapotamus'
 require 'active_record'
 require 'database_cleaner'
@@ -19,7 +20,7 @@ end
 
 ActiveRecord::Base.establish_connection(adapter: 'sqlite3', database: ':memory:')
 
-ActiveRecord::Base.connection.execute 'CREATE TABLE hipaapotamus_actions (id integer PRIMARY KEY NOT NULL, agent_id integer, agent_type character varying NOT NULL, protected_id integer NOT NULL, protected_type character varying NOT NULL, protected_attributes text NOT NULL, action_type integer NOT NULL, performed_at timestamp without time zone NOT NULL, created_at timestamp without time zone NOT NULL);'
+ActiveRecord::Base.connection.execute 'CREATE TABLE hipaapotamus_actions (id integer PRIMARY KEY NOT NULL, agent_id integer, agent_type character varying NOT NULL, protected_id integer, protected_type character varying NOT NULL, serialized_protected_attributes text NOT NULL, action_type integer NOT NULL, action_completed boolean NOT NULL, performed_at timestamp without time zone NOT NULL, created_at timestamp without time zone NOT NULL);'
 
 ActiveRecord::Base.connection.execute 'CREATE TABLE "users" ("id" INTEGER PRIMARY KEY)'
 class User < ActiveRecord::Base
@@ -27,6 +28,21 @@ class User < ActiveRecord::Base
 end
 
 class MedicalSecretPolicy < Hipaapotamus::Policy
+  def access?
+    true
+  end
+
+  def creation?
+    true
+  end
+
+  def modification?
+    true
+  end
+
+  def destruction?
+    true
+  end
 end
 
 ActiveRecord::Base.connection.execute 'CREATE TABLE "medical_secrets" ("id" INTEGER PRIMARY KEY)'

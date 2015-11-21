@@ -8,15 +8,15 @@ module Hipaapotamus
       @agent, @protected = agent, protected
     end
 
-    def authorize(action)
+    def authorized?(action)
       SystemAgent === agent || try(:"#{action}?")
     end
 
     def authorize!(action)
-      authorize(action) || raise(AccountabilityError, "#{agent.hipaapotamus_display_name} does have permission to #{action} #{protected.hipaapotamus_display_name}")
+      authorized?(action) || raise(AccountabilityError, "#{agent.hipaapotamus_display_name} does not have #{action} privileges for #{protected.hipaapotamus_display_name}")
     end
 
-    def create?
+    def creation?
       false
     end
 
@@ -24,11 +24,11 @@ module Hipaapotamus
       false
     end
 
-    def update?
+    def modification?
       false
     end
 
-    def destroy?
+    def destruction?
       false
     end
 

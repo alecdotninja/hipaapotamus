@@ -7,15 +7,15 @@ describe Hipaapotamus::Policy do
 
   context 'by default (unless overwritten by extension)' do
     it 'does not allow create' do
-      expect(policy.create?).to be false
+      expect(policy.creation?).to be false
     end
 
     it 'does not allow update' do
-      expect(policy.update?).to be false
+      expect(policy.modification?).to be false
     end
 
     it 'does not allow destroy' do
-      expect(policy.destroy?).to be false
+      expect(policy.destruction?).to be false
     end
 
     it 'does not allow access' do
@@ -23,24 +23,24 @@ describe Hipaapotamus::Policy do
     end
   end
 
-  describe '#authorize' do
+  describe '#authorized?' do
     it 'delegates to the `?` method for the action' do
       expect(policy).to receive(:derp?).and_return(true)
-      expect(policy.authorize(:derp)).to be_truthy
+      expect(policy.authorized?(:derp)).to be_truthy
 
       expect(policy).to receive(:derp?).and_return(false)
-      expect(policy.authorize(:derp)).to be_falsey
+      expect(policy.authorized?(:derp)).to be_falsey
     end
 
     it 'returns nil if the `?` method for the action does not exist' do
-      expect(policy.authorize(:derp)).to be_falsey
+      expect(policy.authorized?(:derp)).to be_falsey
     end
 
     context 'when SystemAgent' do
       let(:policy) { Hipaapotamus::Policy.new(Hipaapotamus::SystemAgent.instance, protected) }
 
       it 'returns true' do
-        expect(policy.authorize(:derp)).to be_truthy
+        expect(policy.authorized?(:derp)).to be_truthy
       end
     end
   end
