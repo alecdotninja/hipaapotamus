@@ -1,4 +1,4 @@
-# ![Hipaa Hippo](http://imgh.us/noun_227666_cc.svg)Hipaapotamus
+# ![Hipaa Hippo](http://imgh.us/hipaa-hippo.svg)Hipaapotamus
 [![Build Status](https://travis-ci.org/anarchocurious/hipaapotamus.svg)](https://travis-ci.org/anarchocurious/hipaapotamus)
 
 Welcome to your new gem! In this directory, you'll find the files you need to be able to package up your Ruby library into a gem. Put your Ruby code in the file `lib/hipaapotamus`. To experiment with that code, run `bin/console` for an interactive prompt.
