@@ -1,6 +1,6 @@
 require 'spec_helper'
 
-describe Hipaapotamus::Policy do
+describe Hipaapotamus::Protected do
   let(:agent) { User.create! }
   let(:protected) { Hipaapotamus.without_accountability { MedicalSecret.create! } }
 
