@@ -4,7 +4,8 @@ module Hipaapotamus
   class Action < ActiveRecord::Base
     self.table_name = 'hipaapotamus_actions'
 
-    enum action_type: { access: 0, creation: 1, modification: 2, destruction: 3 }
+    enum action_type: { access: 0, creation: 1, modification: 2, destruction: 3,
+                        attempted_access: 4, attempted_creation: 5, attempted_modification: 6, attempted_destruction: 7 }
 
     def agent_class
       agent_type.try(:constantize)
@@ -36,7 +37,6 @@ module Hipaapotamus
       @protected ||= protected_class.new.tap do |protected|
         if protected_id.present?
           protected.id = protected_id
-          protected.reload unless destruction?
         end
 
         if protected_attributes.present?
@@ -63,7 +63,8 @@ module Hipaapotamus
 
     validate :not_changed
     validates :agent_type, :protected_type, :protected_attributes, :action_type, :performed_at, presence: true
-    validates :action_completed, inclusion: { in: [true, false] }
+
+    scope :with_protected, -> (protected) { where(protected_type: protected.class.name, protected_id: protected.id) }
 
     class << self
       def bulk_insert(actions)

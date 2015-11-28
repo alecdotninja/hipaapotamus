@@ -20,7 +20,7 @@ end
 
 ActiveRecord::Base.establish_connection(adapter: 'sqlite3', database: ':memory:')
 
-ActiveRecord::Base.connection.execute 'CREATE TABLE hipaapotamus_actions (id integer PRIMARY KEY NOT NULL, agent_id integer, agent_type character varying NOT NULL, protected_id integer, protected_type character varying NOT NULL, serialized_protected_attributes text NOT NULL, action_type integer NOT NULL, action_completed boolean NOT NULL, performed_at timestamp without time zone NOT NULL, created_at timestamp without time zone NOT NULL);'
+ActiveRecord::Base.connection.execute 'CREATE TABLE hipaapotamus_actions (id integer PRIMARY KEY NOT NULL, agent_id integer, agent_type character varying NOT NULL, protected_id integer, protected_type character varying NOT NULL, serialized_protected_attributes text NOT NULL, action_type integer NOT NULL, performed_at timestamp without time zone NOT NULL, created_at timestamp without time zone NOT NULL);'
 
 ActiveRecord::Base.connection.execute 'CREATE TABLE "users" ("id" INTEGER PRIMARY KEY)'
 class User < ActiveRecord::Base
@@ -47,5 +47,28 @@ end
 
 ActiveRecord::Base.connection.execute 'CREATE TABLE "medical_secrets" ("id" INTEGER PRIMARY KEY)'
 class MedicalSecret < ActiveRecord::Base
+  include Hipaapotamus::Protected
+end
+
+class PatientSecretPolicy < Hipaapotamus::Policy
+  def access?
+    false
+  end
+
+  def creation?
+    false
+  end
+
+  def modification?
+    false
+  end
+
+  def destruction?
+    false
+  end
+end
+
+ActiveRecord::Base.connection.execute 'CREATE TABLE "patient_secrets" ("id" INTEGER PRIMARY KEY, serial_number character varying)'
+class PatientSecret < ActiveRecord::Base
   include Hipaapotamus::Protected
 end

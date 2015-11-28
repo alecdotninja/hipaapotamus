@@ -16,13 +16,17 @@ module Hipaapotamus
     end
 
     # noinspection RubyArgCount
-    def record_action(protected, action_type)
-      @actions << Action.new(
+    def record_action(protected, action_type, transactional = false)
+      action = Action.new(
         agent: agent,
         protected: protected,
         action_type: action_type,
         performed_at: DateTime.now
       )
+
+      action.save! if transactional
+
+      @actions << action
     end
 
     def within
@@ -30,6 +34,7 @@ module Hipaapotamus
       Thread.current[THREAD_STORAGE_KEY] = self
 
       begin
+
         yield(self)
       ensure
         Thread.current[THREAD_STORAGE_KEY] = _accountability_context

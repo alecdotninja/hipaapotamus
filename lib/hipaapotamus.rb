@@ -34,11 +34,7 @@ module Hipaapotamus
           end
         end
 
-        accountability_context.actions.each do |action|
-          action.action_completed = !execution.raised?
-        end
-
-        Action.bulk_insert(accountability_context.actions)
+        Action.bulk_insert(accountability_context.actions.select(&:new_record?))
       end
 
       execution.try(:value)

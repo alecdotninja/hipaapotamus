@@ -27,37 +27,68 @@ module Hipaapotamus
         unless new_record?
           accountability_context = AccountabilityContext.current!
 
-          policy_class!.authorize!(accountability_context.agent, self, :access)
+          begin
+            policy_class!.authorize!(accountability_context.agent, self, :access)
 
-          accountability_context.record_action(self, :access)
+            accountability_context.record_action(self, :access)
+          rescue AccountabilityError => error
+            accountability_context.record_action(self, :attempted_access)
+
+            raise error
+          end
         end
       end
 
       after_create do
         accountability_context = AccountabilityContext.current!
 
-        policy_class!.authorize!(accountability_context.agent, self, :creation)
+        begin
+          policy_class!.authorize!(accountability_context.agent, self, :creation)
 
-        accountability_context.record_action(self, :creation)
+          accountability_context.record_action(self, :creation, true)
+        rescue AccountabilityError => error
+          accountability_context.record_action(self, :attempted_creation)
+
+          raise error
+        end
       end
 
       after_update do
         accountability_context = AccountabilityContext.current!
 
-        policy_class!.authorize!(accountability_context.agent, self, :modification)
+        begin
+          policy_class!.authorize!(accountability_context.agent, self, :modification)
 
-        accountability_context.record_action(self, :modification)
+          accountability_context.record_action(self, :modification, true)
+        rescue AccountabilityError => error
+          accountability_context.record_action(self, :attempted_modification)
+
+          raise error
+        end
       end
 
       after_destroy do
         unless new_record?
           accountability_context = AccountabilityContext.current!
 
-          policy_class!.authorize!(accountability_context, self, :destruction)
+          begin
+            policy_class!.authorize!(accountability_context.agent, self, :destruction)
 
-          accountability_context.record_action(self, :destruction)
+            accountability_context.record_action(self, :destruction, true)
+          rescue AccountabilityError => error
+            accountability_context.record_action(self, :attempted_destruction)
+
+            raise error
+          end
         end
       end
+
+      # after_commit do
+      #   # We don't know :(
+      #   # There appears to be a bug in sqlite or Rails involving nested transactions not properly rolling back.
+      #   # This after_commit hook fixes it.
+      #   #TODO: Mount in a Rails project and test with Postgres
+      # end
     end
 
     def hipaapotamus_display_name

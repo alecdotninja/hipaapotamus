@@ -9,7 +9,6 @@ class CreateHipaapotamusActions < ActiveRecord::Migration
       t.text :serialized_protected_attributes, null: false
 
       t.integer :action_type, null: false
-      t.boolean :action_completed, null: false
 
       t.datetime :performed_at, null: false
       t.datetime :created_at, null: false
