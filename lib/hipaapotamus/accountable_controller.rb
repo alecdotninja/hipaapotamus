@@ -1,7 +1,7 @@
 require 'active_support/concern'
 
 module Hipaapotamus
-  module Accountable
+  module AccountableController
     extend ActiveSupport::Concern
 
     included do

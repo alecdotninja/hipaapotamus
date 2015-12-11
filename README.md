@@ -21,9 +21,65 @@ Or install it yourself as:
 
     $ gem install hipaapotamus
 
+Once the gem is installed, run:
+
+    $ rails generate hipaapotamus:install
+
+and run:
+
+    $ rake db:migrate
+
+to create the hipaapotamus_actions table.
+
 ## Usage
 
-TODO: Write usage instructions here
+### Setting up Agents
+
+Include Hipaapotamus::Agent on any models you want to act as an agent (for example, User) and override the hipaapotamus_display_name method to display whatever agent identifier you like:
+
+```ruby
+class User < ActiveRecord::Base
+  include Hipaapotamus::Agent
+  
+  def hipaapotamus_display_name
+    email
+  end
+end
+```
+
+### Setting up Protected Models
+
+Include Hipaapotamus::Protected on any models you want to be protected by a Hipaapotamus Policy:
+
+```ruby
+class MedicalSecret < ActiveRecord::Base
+  include Hipaapotamus::Protected
+end
+```
+
+### Setting up a Policy
+
+Create a policies folder in your app directory and add your policy as follows (using MedicalSecret from above). Hipaapotamus will automatically against the policy when actions are attempted. When authorizing, the policy has access to the agent and the protected model.
+
+```ruby
+class MedicalSecretPolicy < Hipaapotamus::Policy
+  def access?
+    agent.medical_secrets.include? protected
+  end
+
+  def creation?
+    agent.medical_secrets.include? protected
+  end
+
+  def modification?
+    agent.medical_secrets.include? protected
+  end
+
+  def destruction?
+    agent.medical_secrets.include? protected
+  end
+end
+```
 
 ## Development
 
@@ -39,4 +95,5 @@ Bug reports and pull requests are welcome on GitHub at https://github.com/[USERN
 ## License
 
 The gem is available as open source under the terms of the [MIT License](http://opensource.org/licenses/MIT).
+
 
