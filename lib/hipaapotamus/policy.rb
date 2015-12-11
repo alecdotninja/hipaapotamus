@@ -13,7 +13,7 @@ module Hipaapotamus
     end
 
     def authorize!(action)
-      authorized?(action) || raise(AccountabilityError, "#{agent.hipaapotamus_display_name} does not have #{action} privileges for #{protected.hipaapotamus_display_name}")
+      authorized?(action) || raise(AccountabilityError, "#{agent.hipaapotamus_display_name} does not have #{action} privileges to #{protected.hipaapotamus_display_name}")
     end
 
     def creation?

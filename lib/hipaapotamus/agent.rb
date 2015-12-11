@@ -10,7 +10,7 @@ module Hipaapotamus
     end
 
     def hipaapotamus_display_name
-      'This agent'
+      "#{self.class.name}(id=#{id})" rescue self.class.name
     end
   end
 end

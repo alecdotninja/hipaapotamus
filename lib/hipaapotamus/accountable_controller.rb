@@ -6,9 +6,14 @@ module Hipaapotamus
 
     included do
       around_action :wrap_in_accountability_context
+      rescue_from AccountabilityError, with: :agent_not_authorized
     end
 
     private
+
+    def current_agent
+      current_user
+    end
 
     def wrap_in_accountability_context
       Hipaapotamus.with_accountability(current_agent) do
@@ -16,8 +21,8 @@ module Hipaapotamus
       end
     end
 
-    def current_agent
-      current_user
+    def agent_not_authorized(accountability_error)
+      render text: accountability_error.to_s, status: 401
     end
   end
 end

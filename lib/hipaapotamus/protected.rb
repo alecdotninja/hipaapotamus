@@ -23,65 +23,10 @@ module Hipaapotamus
     included do
       delegate :policy_class, :policy_class!, to: :class
 
-      after_initialize do
-        unless new_record?
-          accountability_context = AccountabilityContext.current!
-
-          begin
-            policy_class!.authorize!(accountability_context.agent, self, :access)
-
-            accountability_context.record_action(self, :access)
-          rescue AccountabilityError => error
-            accountability_context.record_action(self, :attempted_access)
-
-            raise error
-          end
-        end
-      end
-
-      after_create do
-        accountability_context = AccountabilityContext.current!
-
-        begin
-          policy_class!.authorize!(accountability_context.agent, self, :creation)
-
-          accountability_context.record_action(self, :creation, true)
-        rescue AccountabilityError => error
-          accountability_context.record_action(self, :attempted_creation)
-
-          raise error
-        end
-      end
-
-      after_update do
-        accountability_context = AccountabilityContext.current!
-
-        begin
-          policy_class!.authorize!(accountability_context.agent, self, :modification)
-
-          accountability_context.record_action(self, :modification, true)
-        rescue AccountabilityError => error
-          accountability_context.record_action(self, :attempted_modification)
-
-          raise error
-        end
-      end
-
-      after_destroy do
-        unless new_record?
-          accountability_context = AccountabilityContext.current!
-
-          begin
-            policy_class!.authorize!(accountability_context.agent, self, :destruction)
-
-            accountability_context.record_action(self, :destruction, true)
-          rescue AccountabilityError => error
-            accountability_context.record_action(self, :attempted_destruction)
-
-            raise error
-          end
-        end
-      end
+      after_initialize :authorize_access!, unless: :new_record?
+      after_create :authorize_creation!
+      after_update :authorize_modification!
+      after_destroy :authorize_destruction!
     end
 
     def hipaapotamus_display_name
@@ -90,6 +35,62 @@ module Hipaapotamus
       else
 
         "#{self.class.name}(#{self.class.primary_key}=#{self[self.class.primary_key]})"
+      end
+    end
+
+    def authorize_access!
+      accountability_context = AccountabilityContext.current!
+
+      begin
+        policy_class!.authorize!(accountability_context.agent, self, :access)
+
+        accountability_context.record_action(self, :access)
+      rescue AccountabilityError => error
+        accountability_context.record_action(self, :attempted_access)
+
+        raise error
+      end
+    end
+
+    def authorize_creation!
+      accountability_context = AccountabilityContext.current!
+
+      begin
+        policy_class!.authorize!(accountability_context.agent, self, :creation)
+
+        accountability_context.record_action(self, :creation, true)
+      rescue AccountabilityError => error
+        accountability_context.record_action(self, :attempted_creation)
+
+        raise error
+      end
+    end
+
+    def authorize_modification!
+      accountability_context = AccountabilityContext.current!
+
+      begin
+        policy_class!.authorize!(accountability_context.agent, self, :modification)
+
+        accountability_context.record_action(self, :modification, true)
+      rescue AccountabilityError => error
+        accountability_context.record_action(self, :attempted_modification)
+
+        raise error
+      end
+    end
+
+    def authorize_destruction!
+      accountability_context = AccountabilityContext.current!
+
+      begin
+        policy_class!.authorize!(accountability_context.agent, self, :destruction)
+
+        accountability_context.record_action(self, :destruction, true)
+      rescue AccountabilityError => error
+        accountability_context.record_action(self, :attempted_destruction)
+
+        raise error
       end
     end
   end

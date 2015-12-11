@@ -22,7 +22,7 @@ module Hipaapotamus
     end
 
     def agent
-      if agent_class.is_a?(Singleton)
+      if agent_class < Singleton
         agent_class.instance
       else
         agent_class.find(agent_id)
@@ -44,10 +44,16 @@ module Hipaapotamus
     end
 
     def protected
-      @protected ||= protected_class.new(id: protected_id).tap do |protected|
+      @protected ||= protected_class.new.tap do |protected|
+        if protected_id.present?
+          protected.id = protected_id
+        end
+
         if protected_attributes.present?
           protected.assign_attributes protected_attributes
         end
+
+        protected.authorize_access!
       end
     end
 
