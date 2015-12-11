@@ -11,10 +11,6 @@ describe Hipaapotamus::AccountabilityContext do
       expect(accountability_context.agent).to eq agent
     end
 
-    it 'has no actions' do
-      expect(accountability_context.actions).to be_empty
-    end
-
     context 'with a block' do
       it 'runs the block within the accountability_context' do
         accountability_context_within_block = nil
@@ -35,9 +31,11 @@ describe Hipaapotamus::AccountabilityContext do
 
   describe '#record_action' do
     it 'stores a passed in record in actions' do
-      accountability_context.record_action(protected, :creation)
+      accountability_context.within do
+        accountability_context.record_action(protected, :creation)
+      end
 
-      expect(accountability_context.actions.map { |h| h.slice(:protected_id, :protected_type) }).to include(protected_id: protected.id, protected_type: protected.class.name)
+      expect(accountability_context.send(:actions).map { |h| h.slice(:protected_id, :protected_type) }).to include(protected_id: protected.id, protected_type: protected.class.name)
     end
   end
 

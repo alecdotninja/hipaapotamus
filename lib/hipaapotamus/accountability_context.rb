@@ -4,15 +4,20 @@ module Hipaapotamus
   class AccountabilityContext
     THREAD_STORAGE_KEY = :hipaapotamus_active_accountability_context
 
-    attr_reader :agent, :actions
+    attr_reader :agent, :parent_accountability_context, :progenitor_actions
 
     def initialize(agent)
       raise AccountabilityError, 'Cannot create AccountabilityContext without a valid Agent' unless agent.is_a? Agent
 
       @agent = agent
-      @actions = []
+      @open = true
+      @finalized = false
 
       within { yield(self) } if block_given?
+    end
+
+    def open?
+      @open
     end
 
     # noinspection RubyArgCount
@@ -21,24 +26,62 @@ module Hipaapotamus
         agent: agent,
         protected: protected,
         action_type: action_type,
+        source_transaction_state: Hipaapotamus.current_transaction_state,
+        is_transactional: transactional,
         performed_at: DateTime.now
       )
 
-      action.save! if transactional
+      actions << action
+    end
 
-      @actions << action
+    def finalized?
+      @finalized
+    end
+
+    def finalize!
+      raise(AccountabilityError, 'AccountabilityContext is open') if open?
+      raise(AccountabilityError, 'AccountabilityContext is finalized') if finalized?
+
+      Action.bulk_insert(log_worthy_actions) if root?
+
+      @finalized = true
+    end
+
+    def root?
+      parent_accountability_context.nil?
     end
 
     def within
-      _accountability_context = Thread.current[THREAD_STORAGE_KEY]
+      raise(AccountabilityError, 'AccountabilityContext is not open') unless open?
+      @open = false
+
+      @parent_accountability_context = Thread.current[THREAD_STORAGE_KEY]
       Thread.current[THREAD_STORAGE_KEY] = self
 
       begin
 
         yield(self)
       ensure
-        Thread.current[THREAD_STORAGE_KEY] = _accountability_context
+        Thread.current[THREAD_STORAGE_KEY] = @parent_accountability_context
       end
+    end
+
+    protected
+
+    def actions
+      raise(AccountabilityError, 'AccountabilityContext is open') if open?
+
+      @actions ||= if root?
+        []
+      else
+        parent_accountability_context.actions
+      end
+    end
+
+    private
+
+    def log_worthy_actions
+      actions.select(&:log_worthy?)
     end
 
     class << self

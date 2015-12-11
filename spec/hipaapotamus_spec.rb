@@ -34,6 +34,56 @@ describe Hipaapotamus do
       end
     end
 
+    context 'within a transaction' do
+      it 'records all the accesses that occur within the accountability context' do
+        protected
+        agent
+
+        ActiveRecord::Base.transaction do
+          Hipaapotamus.with_accountability(agent) do
+            MedicalSecret.find_by!(id: protected_id)
+          end
+
+          raise ActiveRecord::Rollback
+        end
+
+        action = Hipaapotamus::Action.last
+
+        expect(action.action_type).to eq 'access'
+        expect(action.agent).to eq agent
+
+        Hipaapotamus.without_accountability do
+          expect(action.protected).to eq protected
+        end
+      end
+    end
+
+    context 'within a nested transaction' do
+      it 'records all the accesses that occur within the accountability context' do
+        protected
+        agent
+
+        ActiveRecord::Base.transaction do
+          ActiveRecord::Base.transaction(requires_new: true) do
+            Hipaapotamus.with_accountability(agent) do
+              MedicalSecret.find_by!(id: protected_id)
+            end
+
+            raise ActiveRecord::Rollback
+          end
+        end
+
+        action = Hipaapotamus::Action.last
+
+        expect(action.action_type).to eq 'access'
+        expect(action.agent).to eq agent
+
+        Hipaapotamus.without_accountability do
+          expect(action.protected).to eq protected
+        end
+      end
+    end
+
     context 'for authorized agents' do
       it 'records all the accesses that occur within the accountability context' do
         Hipaapotamus.with_accountability(agent) do
@@ -177,70 +227,70 @@ describe Hipaapotamus do
     end
 
     # TODO: Figure out what the hell is up with transactions vis a vis sqlite
-    # context 'when the outermost transaction rollsback' do
-    #   it 'still records access' do
-    #     protected #Ensures that record is created in case transaction rollsback
-    #
-    #     Hipaapotamus.with_accountability(agent) do
-    #       ActiveRecord::Base.transaction do
-    #         MedicalSecret.find_by!(id: protected_id)
-    #
-    #         raise ActiveRecord::Rollback
-    #       end
-    #     end
-    #
-    #     action = Hipaapotamus::Action.last
-    #
-    #     expect(action.action_type).to eq 'access'
-    #     expect(action.agent).to eq agent
-    #
-    #     Hipaapotamus.without_accountability do
-    #       expect(action.protected).to eq protected
-    #     end
-    #   end
-    #
-    #   it 'does not record creation' do
-    #     medical_secret = nil
-    #
-    #     Hipaapotamus.with_accountability(agent) do
-    #       ActiveRecord::Base.transaction(requires_new: true) do
-    #         medical_secret = MedicalSecret.create!
-    #
-    #         raise ActiveRecord::Rollback
-    #       end
-    #     end
-    #
-    #     expect(Hipaapotamus::Action.with_protected(medical_secret).creation.count).to eq 0
-    #   end
-    #
-    #   it 'does not record modification' do
-    #     medical_secret = protected
-    #
-    #     Hipaapotamus.with_accountability(agent) do
-    #       ActiveRecord::Base.transaction(requires_new: true) do
-    #         medical_secret.update_attributes!({})
-    #
-    #         raise ActiveRecord::Rollback
-    #       end
-    #     end
-    #
-    #     expect(Hipaapotamus::Action.with_protected(medical_secret).modification.count).to eq 0
-    #   end
-    #
-    #   it 'does not record destruction' do
-    #     medical_secret = protected
-    #
-    #     Hipaapotamus.with_accountability(agent) do
-    #       ActiveRecord::Base.transaction(requires_new: true) do
-    #         medical_secret.destroy!
-    #
-    #         raise ActiveRecord::Rollback
-    #       end
-    #     end
-    #
-    #     expect(Hipaapotamus::Action.with_protected(medical_secret).destruction.count).to eq 0
-    #   end
-    # end
+    context 'when the outermost transaction rollsback' do
+      it 'still records access' do
+        protected #Ensures that record is created in case transaction rollsback
+
+        Hipaapotamus.with_accountability(agent) do
+          ActiveRecord::Base.transaction do
+            MedicalSecret.find_by!(id: protected_id)
+
+            raise ActiveRecord::Rollback
+          end
+        end
+
+        action = Hipaapotamus::Action.last
+
+        expect(action.action_type).to eq 'access'
+        expect(action.agent).to eq agent
+
+        Hipaapotamus.without_accountability do
+          expect(action.protected).to eq protected
+        end
+      end
+
+      it 'does not record creation' do
+        medical_secret = nil
+
+        Hipaapotamus.with_accountability(agent) do
+          ActiveRecord::Base.transaction(requires_new: true) do
+            medical_secret = MedicalSecret.create!
+
+            raise ActiveRecord::Rollback
+          end
+        end
+
+        expect(Hipaapotamus::Action.with_protected(medical_secret).creation.count).to eq 0
+      end
+
+      it 'does not record modification' do
+        medical_secret = protected
+
+        Hipaapotamus.with_accountability(agent) do
+          ActiveRecord::Base.transaction(requires_new: true) do
+            medical_secret.update_attributes!({})
+
+            raise ActiveRecord::Rollback
+          end
+        end
+
+        expect(Hipaapotamus::Action.with_protected(medical_secret).modification.count).to eq 0
+      end
+
+      it 'does not record destruction' do
+        medical_secret = protected
+
+        Hipaapotamus.with_accountability(agent) do
+          ActiveRecord::Base.transaction(requires_new: true) do
+            medical_secret.destroy!
+
+            raise ActiveRecord::Rollback
+          end
+        end
+
+        expect(Hipaapotamus::Action.with_protected(medical_secret).destruction.count).to eq 0
+      end
+    end
   end
 
   describe '.without_accountability' do

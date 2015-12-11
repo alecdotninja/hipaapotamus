@@ -82,13 +82,6 @@ module Hipaapotamus
           end
         end
       end
-
-      # after_commit do
-      #   # We don't know :(
-      #   # There appears to be a bug in sqlite or Rails involving nested transactions not properly rolling back.
-      #   # This after_commit hook fixes it.
-      #   #TODO: Mount in a Rails project and test with Postgres
-      # end
     end
 
     def hipaapotamus_display_name

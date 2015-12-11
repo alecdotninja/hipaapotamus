@@ -4,8 +4,18 @@ module Hipaapotamus
   class Action < ActiveRecord::Base
     self.table_name = 'hipaapotamus_actions'
 
+    attr_accessor :source_transaction_state
+
     enum action_type: { access: 0, creation: 1, modification: 2, destruction: 3,
                         attempted_access: 4, attempted_creation: 5, attempted_modification: 6, attempted_destruction: 7 }
+
+    def transactional?
+      is_transactional
+    end
+
+    def log_worthy?
+      persisted? || !transactional? || source_transaction_state.committed?
+    end
 
     def agent_class
       agent_type.try(:constantize)
