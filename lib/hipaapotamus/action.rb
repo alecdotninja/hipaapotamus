@@ -44,11 +44,7 @@ module Hipaapotamus
     end
 
     def protected
-      @protected ||= protected_class.new.tap do |protected|
-        if protected_id.present?
-          protected.id = protected_id
-        end
-
+      @protected ||= protected_class.new(id: protected_id).tap do |protected|
         if protected_attributes.present?
           protected.assign_attributes protected_attributes
         end
