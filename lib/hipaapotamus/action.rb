@@ -92,6 +92,8 @@ module Hipaapotamus
 
           uniq_keys = attributeses.map { |attributes| attributes.keys }.flatten(1).uniq
 
+          uniq_keys.delete primary_key.to_sym if uniq_keys.include?(primary_key.to_sym)
+
           column_names = uniq_keys.map(&:to_s)
           rows = attributeses.map { |attributes| uniq_keys.map { |key| attributes[key] } }
 
