@@ -90,9 +90,7 @@ module Hipaapotamus
           attributeses.each { |attributes| attributes['created_at'] = now } if self.column_names.include?('created_at')
           attributeses.each { |attributes| attributes['updated_at'] = now } if self.column_names.include?('updated_at')
 
-          uniq_keys = attributeses.map { |attributes| attributes.keys }.flatten(1).uniq
-
-          uniq_keys.delete primary_key.to_sym if uniq_keys.include?(primary_key.to_sym)
+          uniq_keys = attributeses.map { |attributes| attributes.keys }.flatten(1).uniq.reject { |key| key == primary_key || key == primary_key.to_sym }
 
           column_names = uniq_keys.map(&:to_s)
           rows = attributeses.map { |attributes| uniq_keys.map { |key| attributes[key] } }
