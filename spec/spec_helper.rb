@@ -43,6 +43,10 @@ class MedicalSecretPolicy < Hipaapotamus::Policy
   def destruction?
     true
   end
+
+  def scope
+    MedicalSecret.all
+  end
 end
 
 ActiveRecord::Base.connection.execute 'CREATE TABLE "medical_secrets" ("id" INTEGER PRIMARY KEY)'
@@ -65,6 +69,10 @@ class PatientSecretPolicy < Hipaapotamus::Policy
 
   def destruction?
     false
+  end
+
+  def scope
+    PatientSecret.where(PatientSecret.arel_table[:serial_number].not_eq('out of scope').or(PatientSecret.arel_table[:serial_number].eq(nil)))
   end
 end
 

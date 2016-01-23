@@ -32,6 +32,12 @@ describe Hipaapotamus::Protected do
     end
   end
 
+  describe '.policy_scope' do
+    it 'returns an ActiveRecord::Relation' do
+      expect(MedicalSecret.policy_scope).to be_an ActiveRecord::Relation
+    end
+  end
+
   describe '#hipaapotamus_display_name' do
     context 'on new record' do
       it 'returns a string stating that it is a new record' do

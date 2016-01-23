@@ -34,6 +34,16 @@ describe Hipaapotamus do
       end
     end
 
+    it 'uses the policy scope' do
+      patient_secret = Hipaapotamus.without_accountability do
+        PatientSecret.create!(serial_number: 'out of scope')
+      end
+
+      Hipaapotamus.with_accountability(agent) do
+        expect(PatientSecret.find_by(id: patient_secret.id)).to be_nil
+      end
+    end
+
     context 'within a transaction' do
       it 'records all the accesses that occur within the accountability context' do
         protected

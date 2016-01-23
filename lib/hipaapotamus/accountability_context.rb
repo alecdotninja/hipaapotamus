@@ -92,6 +92,14 @@ module Hipaapotamus
       def current!
         current || raise(AccountabilityError, 'Not within an AccountabilityContext')
       end
+
+      def current_agent
+        current.try(:agent)
+      end
+
+      def current_agent!
+        current!.agent
+      end
     end
   end
 end

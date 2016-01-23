@@ -32,9 +32,17 @@ module Hipaapotamus
       false
     end
 
+    def scope
+      nil
+    end
+
     class << self
       def authorize!(agent, protected, action)
         new(agent, protected).authorize!(action)
+      end
+
+      def scope(agent)
+        new(agent, nil).scope
       end
     end
   end
