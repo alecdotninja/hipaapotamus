@@ -41,8 +41,12 @@ module Hipaapotamus
         new(agent, protected).authorize!(action)
       end
 
-      def scope(agent)
-        new(agent, nil).scope
+      def scope(agent, klass)
+        if SystemAgent === agent
+          klass.all
+        else
+          new(agent, nil).scope
+        end
       end
     end
   end
