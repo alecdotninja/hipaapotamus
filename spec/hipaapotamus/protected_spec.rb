@@ -32,9 +32,9 @@ describe Hipaapotamus::Protected do
     end
   end
 
-  describe '.policy_scope' do
+  describe '.policy_scoped' do
     it 'returns an ActiveRecord::Relation' do
-      expect(MedicalSecret.policy_scope).to be_an ActiveRecord::Relation
+      expect(MedicalSecret.policy_scoped).to be_an ActiveRecord::Relation
     end
   end
 

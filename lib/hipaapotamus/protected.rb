@@ -19,7 +19,7 @@ module Hipaapotamus
         policy_class || raise(AccountabilityError, "Could not find the policy class for #{name}")
       end
 
-      def policy_scope
+      def policy_scoped
         policy_class!.scope(AccountabilityContext.current_agent) || none
       end
     end
@@ -32,7 +32,7 @@ module Hipaapotamus
       after_update :authorize_modification!
       after_destroy :authorize_destruction!
 
-      default_scope { policy_scope }
+      # default_scope { policy_scope }
     end
 
     def hipaapotamus_display_name

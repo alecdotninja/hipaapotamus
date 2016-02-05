@@ -40,7 +40,7 @@ describe Hipaapotamus do
       end
 
       Hipaapotamus.with_accountability(agent) do
-        expect(PatientSecret.find_by(id: patient_secret.id)).to be_nil
+        expect(PatientSecret.policy_scoped.find_by(id: patient_secret.id)).to be_nil
       end
     end
 
