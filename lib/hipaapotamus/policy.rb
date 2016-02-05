@@ -32,7 +32,7 @@ module Hipaapotamus
       false
     end
 
-    def self.scope
+    def self.scope(agent)
       nil
     end
 
@@ -45,7 +45,7 @@ module Hipaapotamus
         if SystemAgent === agent
           klass.all
         else
-          scope || klass.none
+          scope(agent) || klass.none
         end
       end
     end
