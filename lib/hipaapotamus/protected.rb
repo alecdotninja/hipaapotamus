@@ -20,7 +20,7 @@ module Hipaapotamus
       end
 
       def policy_scoped
-        policy_class!.scope(AccountabilityContext.current_agent) || none
+        policy_class!.resolve_scope!(AccountabilityContext.current_agent, self)
       end
     end
 

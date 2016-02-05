@@ -32,7 +32,7 @@ module Hipaapotamus
       false
     end
 
-    def scope
+    def self.scope
       nil
     end
 
@@ -41,8 +41,12 @@ module Hipaapotamus
         new(agent, protected).authorize!(action)
       end
 
-      def scope(agent)
-        new(agent, nil).scope
+      def resolve_scope!(agent, klass)
+        if SystemAgent === agent
+          klass.all
+        else
+          scope || klass.none
+        end
       end
     end
   end

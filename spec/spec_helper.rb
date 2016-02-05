@@ -44,7 +44,7 @@ class MedicalSecretPolicy < Hipaapotamus::Policy
     true
   end
 
-  def scope
+  def self.scope
     MedicalSecret.all
   end
 end
@@ -71,7 +71,7 @@ class PatientSecretPolicy < Hipaapotamus::Policy
     false
   end
 
-  def scope
+  def self.scope
     PatientSecret.where(PatientSecret.arel_table[:serial_number].not_eq('out of scope').or(PatientSecret.arel_table[:serial_number].eq(nil)))
   end
 end
