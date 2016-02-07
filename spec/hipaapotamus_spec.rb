@@ -44,6 +44,22 @@ describe Hipaapotamus do
       end
     end
 
+    it 'filters attributes during mass assignment with ActionController::Parameters' do
+      params = ActionController::Parameters.new(patient_secret: { serial_number: 'woot' })
+
+      Hipaapotamus.without_accountability do
+        allow(PatientSecretPolicy).to receive(:permitted_attributes).and_return([:serial_number])
+        very_protected.assign_attributes(params.require(:patient_secret).permit(:serial_number) )
+        expect(very_protected.serial_number).to eq 'woot'
+
+        very_protected.serial_number = 'toot'
+
+        allow(PatientSecretPolicy).to receive(:permitted_attributes).and_return([])
+        very_protected.assign_attributes(params.require(:patient_secret).permit(:serial_number) )
+        expect(very_protected.serial_number).to eq 'toot'
+      end
+    end
+
     context 'within a transaction' do
       it 'records all the accesses that occur within the accountability context' do
         protected

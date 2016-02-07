@@ -2,8 +2,8 @@ require 'spec_helper'
 
 describe Hipaapotamus::Policy do
   let(:agent) { User.create! }
-  let(:protected) { Hipaapotamus.without_accountability { MedicalSecret.create! } }
-  let(:policy) { Hipaapotamus::Policy.new(agent, protected) }
+  let(:protected) { Hipaapotamus.without_accountability { Untainted.create! } }
+  let(:policy) { UntaintedPolicy.new(agent, protected) }
 
   context 'by default (unless overwritten by extension)' do
     it 'does not allow create' do
@@ -37,7 +37,7 @@ describe Hipaapotamus::Policy do
     end
 
     context 'when SystemAgent' do
-      let(:policy) { Hipaapotamus::Policy.new(Hipaapotamus::SystemAgent.instance, protected) }
+      let(:policy) { UntaintedPolicy.new(Hipaapotamus::SystemAgent.instance, protected) }
 
       it 'returns true' do
         expect(policy.authorized?(:derp)).to be_truthy
@@ -54,4 +54,51 @@ describe Hipaapotamus::Policy do
       expect { policy.authorize!(:derp) }.to raise_error AccountabilityError
     end
   end
+
+  describe '#protected_class_name' do
+    it 'returns the class name without the Class on the end' do
+      expect(UntaintedPolicy.protected_class_name).to eq 'Untainted'
+    end
+  end
+
+  describe '#protected_class' do
+    it 'returns the class of the protected' do
+      expect(UntaintedPolicy.protected_class).to be Untainted
+    end
+  end
+
+  describe '#inherited' do
+    it 'defines an instance method with an intuative name that can be used to access the protected' do
+      expect(UntaintedPolicy.instance_methods).to include :untainted
+    end
+  end
+
+  describe '#resolve_scope' do
+    it 'defaults to none' do
+      expect(UntaintedPolicy.resolve_scope(agent)).to eq Untainted.none
+    end
+
+    it 'falls back to none' do
+      allow(UntaintedPolicy).to receive(:scope).and_return(nil)
+
+      expect(UntaintedPolicy.resolve_scope(agent)).to eq Untainted.none
+    end
+
+    context 'for normal agents' do
+      it 'delegates to #scope' do
+        allow(UntaintedPolicy).to receive(:scope).and_return(Untainted.where(id: 7))
+
+        expect(UntaintedPolicy.resolve_scope(agent)).to eq Untainted.where(id: 7)
+      end
+    end
+
+    context 'for system agents' do
+      let(:agent) { Hipaapotamus::SystemAgent.instance }
+
+      it 'returns all' do
+        expect(UntaintedPolicy.resolve_scope(agent)).to eq Untainted.all
+      end
+    end
+  end
+
 end

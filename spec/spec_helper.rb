@@ -2,6 +2,7 @@ $LOAD_PATH.unshift File.expand_path('../../lib', __FILE__)
 require 'pry'
 require 'hipaapotamus'
 require 'active_record'
+require 'action_controller'
 require 'database_cleaner'
 
 RSpec.configure do |config|
@@ -27,9 +28,14 @@ class User < ActiveRecord::Base
   include Hipaapotamus::Agent
 end
 
+ActiveRecord::Base.connection.execute 'CREATE TABLE "medical_secrets" ("id" INTEGER PRIMARY KEY)'
+class MedicalSecret < ActiveRecord::Base
+  include Hipaapotamus::Protected
+end
+
 class MedicalSecretPolicy < Hipaapotamus::Policy
   def access?
-    true
+    medical_secret.present?
   end
 
   def creation?
@@ -49,8 +55,8 @@ class MedicalSecretPolicy < Hipaapotamus::Policy
   end
 end
 
-ActiveRecord::Base.connection.execute 'CREATE TABLE "medical_secrets" ("id" INTEGER PRIMARY KEY)'
-class MedicalSecret < ActiveRecord::Base
+ActiveRecord::Base.connection.execute 'CREATE TABLE "patient_secrets" ("id" INTEGER PRIMARY KEY, serial_number character varying)'
+class PatientSecret < ActiveRecord::Base
   include Hipaapotamus::Protected
 end
 
@@ -76,7 +82,14 @@ class PatientSecretPolicy < Hipaapotamus::Policy
   end
 end
 
-ActiveRecord::Base.connection.execute 'CREATE TABLE "patient_secrets" ("id" INTEGER PRIMARY KEY, serial_number character varying)'
-class PatientSecret < ActiveRecord::Base
+ActiveRecord::Base.connection.execute 'CREATE TABLE "untainteds" ("id" INTEGER PRIMARY KEY)'
+class Untainted < ActiveRecord::Base
   include Hipaapotamus::Protected
+end
+
+class UntaintedPolicy < Hipaapotamus::Policy
+end
+
+ActiveRecord::Base.connection.execute 'CREATE TABLE "policyless_models" ("id" INTEGER PRIMARY KEY)'
+class PolicylessModel < ActiveRecord::Base
 end

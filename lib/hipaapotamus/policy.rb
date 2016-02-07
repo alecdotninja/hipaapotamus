@@ -1,10 +1,21 @@
 require 'hipaapotamus/accountability_error'
+require 'hipaapotamus/agent'
+require 'hipaapotamus/system_agent'
 
 module Hipaapotamus
   class Policy
     attr_reader :agent, :protected
 
+    delegate :protected_class, :protected_class_name, to: :class
+
+    def self.scope(agent)
+      protected_class.none
+    end
+
     def initialize(agent, protected)
+      raise 'Expected an instance of Hipaapotamus::Agent for agent' unless Agent === agent
+      raise "Expected an instance of #{protected_class_name} for protected" unless protected_class === protected
+
       @agent, @protected = agent, protected
     end
 
@@ -32,21 +43,49 @@ module Hipaapotamus
       false
     end
 
-    def self.scope(agent)
-      nil
+    def permitted_attributes
+      []
     end
 
     class << self
+      def protected_class_name
+        @protected_class_name ||= name.chomp('Policy') if name.ends_with?('Policy')
+      end
+
+      def protected_class
+        @protected_class ||= protected_class_name.constantize
+      end
+
       def authorize!(agent, protected, action)
         new(agent, protected).authorize!(action)
       end
 
-      def resolve_scope!(agent, klass)
+      def permitted_attributes(agent, protected)
+        new(agent, protected).permitted_attributes || []
+      end
+
+      def resolve_scope(agent)
         if SystemAgent === agent
-          klass.all
+          protected_class.all
         else
-          scope(agent) || klass.none
+          scope(agent) || protected_class.none
         end
+      end
+
+      private
+
+      def protected_class_protected_instance_method_name
+        @protected_class_instance_method_name ||= protected_class.name.demodulize.underscore.to_sym
+      end
+
+      def inherited(subclass)
+        subclass.module_eval do
+          unless method_defined?(protected_class_protected_instance_method_name)
+            alias_method protected_class_protected_instance_method_name, :protected
+          end
+        end
+
+        super
       end
     end
   end

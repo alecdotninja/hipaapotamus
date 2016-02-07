@@ -9,5 +9,9 @@ module Hipaapotamus
     def hipaapotamus_display_name
       self.class.name
     end
+
+    class << self
+      delegate :with_accountability, to: :instance
+    end
   end
 end

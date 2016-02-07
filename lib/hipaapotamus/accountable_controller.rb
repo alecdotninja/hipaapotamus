@@ -22,7 +22,8 @@ module Hipaapotamus
     end
 
     def agent_not_authorized(accountability_error)
-      render text: accountability_error.to_s, status: 401
+      # render text: accountability_error.to_s, status: 401
+      render file: 'public/403', status: 403, formats: [:html], layout: false
     end
   end
 end

@@ -11,23 +11,15 @@ describe Hipaapotamus::Protected do
   end
 
   describe '.policy_class' do
-    it 'returns the policy class of the protected model' do
-      expect(MedicalSecret.policy_class).to be MedicalSecretPolicy
-    end
-  end
-
-  describe '.policy_class!' do
     context 'policy class exists' do
       it 'returns the policy class of the protected model' do
-        expect(MedicalSecret.policy_class!).to be MedicalSecretPolicy
+        expect(MedicalSecret.policy_class).to be MedicalSecretPolicy
       end
     end
 
     context 'policy class does not exist' do
-      it 'raises an AccountabilityError' do
-        allow(MedicalSecret).to receive(:policy_class) {nil}
-
-        expect{ MedicalSecret.policy_class! }.to raise_error(AccountabilityError)
+      it 'raises an error' do
+        expect{ PolicylessModel.policy_class }.to raise_error NameError
       end
     end
   end

@@ -10,29 +10,21 @@ module Hipaapotamus
       end
 
       def policy_class
-        if policy_class_name
-          @policy_class ||= policy_class_name.constantize
-        end
-      end
-
-      def policy_class!
-        policy_class || raise(AccountabilityError, "Could not find the policy class for #{name}")
+        @policy_class ||= policy_class_name.constantize
       end
 
       def policy_scoped
-        policy_class!.resolve_scope!(AccountabilityContext.current_agent, self)
+        policy_class.resolve_scope(AccountabilityContext.current_agent)
       end
     end
 
     included do
-      delegate :policy_class, :policy_class!, to: :class
+      delegate :policy_class, to: :class
 
       after_initialize :authorize_access!, unless: :new_record?
       after_create :authorize_creation!
       after_update :authorize_modification!
       after_destroy :authorize_destruction!
-
-      # default_scope { policy_scope }
     end
 
     def hipaapotamus_display_name
@@ -48,7 +40,7 @@ module Hipaapotamus
       accountability_context = AccountabilityContext.current!
 
       begin
-        policy_class!.authorize!(accountability_context.agent, self, :access)
+        policy_class.authorize!(accountability_context.agent, self, :access)
 
         accountability_context.record_action(self, :access)
       rescue AccountabilityError => error
@@ -62,7 +54,7 @@ module Hipaapotamus
       accountability_context = AccountabilityContext.current!
 
       begin
-        policy_class!.authorize!(accountability_context.agent, self, :creation)
+        policy_class.authorize!(accountability_context.agent, self, :creation)
 
         accountability_context.record_action(self, :creation, true)
       rescue AccountabilityError => error
@@ -76,7 +68,7 @@ module Hipaapotamus
       accountability_context = AccountabilityContext.current!
 
       begin
-        policy_class!.authorize!(accountability_context.agent, self, :modification)
+        policy_class.authorize!(accountability_context.agent, self, :modification)
 
         accountability_context.record_action(self, :modification, true)
       rescue AccountabilityError => error
@@ -90,13 +82,25 @@ module Hipaapotamus
       accountability_context = AccountabilityContext.current!
 
       begin
-        policy_class!.authorize!(accountability_context.agent, self, :destruction)
+        policy_class.authorize!(accountability_context.agent, self, :destruction)
 
         accountability_context.record_action(self, :destruction, true)
       rescue AccountabilityError => error
         accountability_context.record_action(self, :attempted_destruction)
 
         raise error
+      end
+    end
+
+    protected
+
+    def sanitize_for_mass_assignment(attributes)
+      if attributes.respond_to?(:permitted?) && attributes.respond_to?(:permit)
+        accountability_context = AccountabilityContext.current!
+
+        super attributes.permit(policy_class.permitted_attributes(accountability_context.agent, self))
+      else
+        super attributes
       end
     end
   end

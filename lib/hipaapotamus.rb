@@ -39,6 +39,8 @@ module Hipaapotamus
     end
 
     def with_accountability(agent, &block)
+      agent = agent.instance if Class === agent && agent <= SystemAgent
+
       execution = nil
       accountability_context = AccountabilityContext.new(agent)
 
