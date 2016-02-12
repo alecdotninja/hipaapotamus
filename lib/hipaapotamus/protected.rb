@@ -92,13 +92,15 @@ module Hipaapotamus
       end
     end
 
+    def permitted_attributes
+      policy_class.permitted_attributes(AccountabilityContext.current!.agent, self)
+    end
+
     protected
 
     def sanitize_for_mass_assignment(attributes)
       if attributes.respond_to?(:permitted?) && attributes.respond_to?(:permit)
-        accountability_context = AccountabilityContext.current!
-
-        super attributes.permit(policy_class.permitted_attributes(accountability_context.agent, self))
+        super attributes.permit permitted_attributes
       else
         super attributes
       end
