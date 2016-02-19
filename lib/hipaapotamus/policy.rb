@@ -61,7 +61,11 @@ module Hipaapotamus
       end
 
       def permitted_attributes(agent, protected)
-        new(agent, protected).permitted_attributes || []
+        if SystemAgent === agent
+          :permit_all_attributes
+        else
+          new(agent, protected).permitted_attributes || []
+        end
       end
 
       def resolve_scope(agent)
