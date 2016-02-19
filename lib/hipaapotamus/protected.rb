@@ -100,7 +100,7 @@ module Hipaapotamus
 
     def sanitize_for_mass_assignment(attributes)
       if attributes.respond_to?(:permitted?) && attributes.respond_to?(:permit) && (_permitted_attributes = permitted_attributes) != :permit_all_attributes
-        super attributes.permit _permitted_attributes
+        super attributes.permit(_permitted_attributes).to_unsafe_hash
       else
         super attributes
       end
