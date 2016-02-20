@@ -15,6 +15,10 @@ module Hipaapotamus
         @policy_class ||= policy_class_name.constantize
       end
 
+      def policy(instance)
+        policy_class.new(Hipaapotamus.current_agent, instance)
+      end
+
       def collection_policy_class
         policy_class.collection_policy_class
       end
@@ -25,7 +29,11 @@ module Hipaapotamus
     end
 
     def policy
-      self.class.policy_class.new(Hipaapotamus.current_agent, self)
+      self.class.policy(self)
+    end
+
+    def collection_policy
+      self.class.collection_policy
     end
   end
 end
