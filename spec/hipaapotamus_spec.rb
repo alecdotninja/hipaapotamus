@@ -23,10 +23,10 @@ describe Hipaapotamus do
 
   describe '.with_accountability' do
     let(:agent) { User.create! }
-    let(:protected) { Hipaapotamus.without_accountability { MedicalSecret.create! } }
-    let(:protected_id) { protected.id }
-    let(:very_protected) { Hipaapotamus.without_accountability { PatientSecret.create! } }
-    let(:very_protected_id) { very_protected.id }
+    let(:defended) { Hipaapotamus.without_accountability { MedicalSecret.create! } }
+    let(:defended_id) { defended.id }
+    let(:very_defended) { Hipaapotamus.without_accountability { PatientSecret.create! } }
+    let(:very_defended_id) { very_defended.id }
 
     it 'evaluates a block in an AccountabilityContext with the provided agent' do
       Hipaapotamus.with_accountability(agent) do
@@ -48,26 +48,27 @@ describe Hipaapotamus do
       params = ActionController::Parameters.new(patient_secret: { serial_number: 'woot' })
 
       Hipaapotamus.without_accountability do
-        allow(PatientSecretPolicy).to receive(:permitted_attributes).and_return([:serial_number])
-        very_protected.assign_attributes(params.require(:patient_secret).permit(:serial_number) )
-        expect(very_protected.serial_number).to eq 'woot'
+        allow_any_instance_of(PatientSecretPolicy).to receive(:permitted_attributes).and_return([:serial_number])
 
-        very_protected.serial_number = 'toot'
+        very_defended.assign_attributes(params.require(:patient_secret).permit(:serial_number) )
+        expect(very_defended.serial_number).to eq 'woot'
 
-        allow(PatientSecretPolicy).to receive(:permitted_attributes).and_return([])
-        very_protected.assign_attributes(params.require(:patient_secret).permit(:serial_number) )
-        expect(very_protected.serial_number).to eq 'toot'
+        very_defended.serial_number = 'toot'
+
+        allow_any_instance_of(PatientSecretPolicy).to receive(:permitted_attributes).and_return([])
+        very_defended.assign_attributes(params.require(:patient_secret).permit(:serial_number) )
+        expect(very_defended.serial_number).to eq 'toot'
       end
     end
 
     context 'within a transaction' do
       it 'records all the accesses that occur within the accountability context' do
-        protected
+        defended
         agent
 
         ActiveRecord::Base.transaction do
           Hipaapotamus.with_accountability(agent) do
-            MedicalSecret.find_by!(id: protected_id)
+            MedicalSecret.find_by!(id: defended_id)
           end
 
           raise ActiveRecord::Rollback
@@ -79,20 +80,20 @@ describe Hipaapotamus do
         expect(action.agent).to eq agent
 
         Hipaapotamus.without_accountability do
-          expect(action.protected).to eq protected
+          expect(action.defended).to eq defended
         end
       end
     end
 
     context 'within a nested transaction' do
       it 'records all the accesses that occur within the accountability context' do
-        protected
+        defended
         agent
 
         ActiveRecord::Base.transaction do
           ActiveRecord::Base.transaction(requires_new: true) do
             Hipaapotamus.with_accountability(agent) do
-              MedicalSecret.find_by!(id: protected_id)
+              MedicalSecret.find_by!(id: defended_id)
             end
 
             raise ActiveRecord::Rollback
@@ -105,7 +106,7 @@ describe Hipaapotamus do
         expect(action.agent).to eq agent
 
         Hipaapotamus.without_accountability do
-          expect(action.protected).to eq protected
+          expect(action.defended).to eq defended
         end
       end
     end
@@ -113,7 +114,7 @@ describe Hipaapotamus do
     context 'for authorized agents' do
       it 'records all the accesses that occur within the accountability context' do
         Hipaapotamus.with_accountability(agent) do
-          MedicalSecret.find_by!(id: protected_id)
+          MedicalSecret.find_by!(id: defended_id)
         end
 
         action = Hipaapotamus::Action.last
@@ -122,7 +123,7 @@ describe Hipaapotamus do
         expect(action.agent).to eq agent
 
         Hipaapotamus.without_accountability do
-          expect(action.protected).to eq protected
+          expect(action.defended).to eq defended
         end
       end
 
@@ -137,13 +138,13 @@ describe Hipaapotamus do
         expect(action.agent).to eq agent
 
         Hipaapotamus.without_accountability do
-          expect(action.protected).to eq medical_secret
+          expect(action.defended).to eq medical_secret
         end
       end
 
       it 'records all the modifications that occur within the accountability context' do
         Hipaapotamus.with_accountability(agent) do
-          protected.update_attributes!({})
+          defended.update_attributes!({})
         end
 
         action = Hipaapotamus::Action.last
@@ -152,13 +153,13 @@ describe Hipaapotamus do
         expect(action.agent).to eq agent
 
         Hipaapotamus.without_accountability do
-          expect(action.protected).to eq protected
+          expect(action.defended).to eq defended
         end
       end
 
       it 'records all the destructions that occur within the accountability context' do
         Hipaapotamus.with_accountability(agent) do
-          protected.destroy!
+          defended.destroy!
         end
 
         action = Hipaapotamus::Action.last
@@ -167,20 +168,20 @@ describe Hipaapotamus do
         expect(action.agent).to eq agent
 
         Hipaapotamus.without_accountability do
-          expect(action.protected).to eq protected
+          expect(action.defended).to eq defended
         end
       end
     end
 
     context 'for unauthorized agents' do
       it 'records all failed accesses that occur within the accountability context' do
-        very_protected #Ensures that record is created in case transaction rollsback
+        very_defended #Ensures that record is created in case transaction rollsback
 
         expect do
           Hipaapotamus.with_accountability(agent) do
-            PatientSecret.find_by!(id: very_protected_id)
+            PatientSecret.find_by!(id: very_defended_id)
           end
-        end.to raise_error AccountabilityError
+        end.to raise_error Hipaapotamus::AccountabilityError
 
         action = Hipaapotamus::Action.last
 
@@ -188,7 +189,7 @@ describe Hipaapotamus do
         expect(action.agent).to eq agent
 
         Hipaapotamus.without_accountability do
-          expect(action.protected).to eq very_protected
+          expect(action.defended).to eq very_defended
         end
       end
 
@@ -201,7 +202,7 @@ describe Hipaapotamus do
 
             patient_secret.save!
           end
-        end.to raise_error AccountabilityError
+        end.to raise_error Hipaapotamus::AccountabilityError
 
         action = Hipaapotamus::Action.last
 
@@ -209,18 +210,18 @@ describe Hipaapotamus do
         expect(action.agent).to eq agent
 
         Hipaapotamus.without_accountability do
-          expect(action.protected.serial_number).to eq patient_secret.serial_number
+          expect(action.defended.serial_number).to eq patient_secret.serial_number
         end
       end
 
       it 'records all failed modifications that occur within the accountability context' do
-        very_protected #Ensures that record is created in case transaction rollsback
+        very_defended #Ensures that record is created in case transaction rollsback
 
         expect do
           Hipaapotamus.with_accountability(agent) do
-            very_protected.update_attributes!({})
+            very_defended.update_attributes!({})
           end
-        end.to raise_error AccountabilityError
+        end.to raise_error Hipaapotamus::AccountabilityError
 
         action = Hipaapotamus::Action.last
 
@@ -228,18 +229,18 @@ describe Hipaapotamus do
         expect(action.agent).to eq agent
 
         Hipaapotamus.without_accountability do
-          expect(action.protected).to eq very_protected
+          expect(action.defended).to eq very_defended
         end
       end
 
       it 'records all failed destructions that occur within the accountability context' do
-        very_protected #Ensures that record is created in case transaction rollsback
+        very_defended #Ensures that record is created in case transaction rollsback
 
         expect do
           Hipaapotamus.with_accountability(agent) do
-            very_protected.destroy!
+            very_defended.destroy!
           end
-        end.to raise_error AccountabilityError
+        end.to raise_error Hipaapotamus::AccountabilityError
 
         action = Hipaapotamus::Action.last
 
@@ -247,7 +248,7 @@ describe Hipaapotamus do
         expect(action.agent).to eq agent
 
         Hipaapotamus.without_accountability do
-          expect(action.protected).to eq very_protected
+          expect(action.defended).to eq very_defended
         end
       end
     end
@@ -255,11 +256,11 @@ describe Hipaapotamus do
     # TODO: Figure out what the hell is up with transactions vis a vis sqlite
     context 'when the outermost transaction rollsback' do
       it 'still records access' do
-        protected #Ensures that record is created in case transaction rollsback
+        defended #Ensures that record is created in case transaction rollsback
 
         Hipaapotamus.with_accountability(agent) do
           ActiveRecord::Base.transaction do
-            MedicalSecret.find_by!(id: protected_id)
+            MedicalSecret.find_by!(id: defended_id)
 
             raise ActiveRecord::Rollback
           end
@@ -271,7 +272,7 @@ describe Hipaapotamus do
         expect(action.agent).to eq agent
 
         Hipaapotamus.without_accountability do
-          expect(action.protected).to eq protected
+          expect(action.defended).to eq defended
         end
       end
 
@@ -286,11 +287,11 @@ describe Hipaapotamus do
           end
         end
 
-        expect(Hipaapotamus::Action.with_protected(medical_secret).creation.count).to eq 0
+        expect(Hipaapotamus::Action.with_defended(medical_secret).creation.count).to eq 0
       end
 
       it 'does not record modification' do
-        medical_secret = protected
+        medical_secret = defended
 
         Hipaapotamus.with_accountability(agent) do
           ActiveRecord::Base.transaction(requires_new: true) do
@@ -300,11 +301,11 @@ describe Hipaapotamus do
           end
         end
 
-        expect(Hipaapotamus::Action.with_protected(medical_secret).modification.count).to eq 0
+        expect(Hipaapotamus::Action.with_defended(medical_secret).modification.count).to eq 0
       end
 
       it 'does not record destruction' do
-        medical_secret = protected
+        medical_secret = defended
 
         Hipaapotamus.with_accountability(agent) do
           ActiveRecord::Base.transaction(requires_new: true) do
@@ -314,7 +315,7 @@ describe Hipaapotamus do
           end
         end
 
-        expect(Hipaapotamus::Action.with_protected(medical_secret).destruction.count).to eq 0
+        expect(Hipaapotamus::Action.with_defended(medical_secret).destruction.count).to eq 0
       end
     end
   end

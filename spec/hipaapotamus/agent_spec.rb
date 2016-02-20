@@ -10,10 +10,4 @@ describe Hipaapotamus::AnonymousAgent do
       end
     end
   end
-
-  describe '#hipaapotamus_display_name' do
-    it 'returns a string' do
-      expect(agent.hipaapotamus_display_name).to be_a String
-    end
-  end
 end

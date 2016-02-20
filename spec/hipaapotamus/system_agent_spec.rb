@@ -9,10 +9,4 @@ describe Hipaapotamus::SystemAgent do
       expect(Hipaapotamus::SystemAgent.instance).to be Hipaapotamus::SystemAgent.instance
     end
   end
-
-  describe '#hipaapotamus_display_name' do
-    it 'returns the class name (for subclass compatibility)' do
-      expect(anonymous_agent.hipaapotamus_display_name).to eq Hipaapotamus::SystemAgent.name
-    end
-  end
 end

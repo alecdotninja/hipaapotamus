@@ -39,44 +39,44 @@ module Hipaapotamus
       self.agent_type = agent.class.name
     end
 
-    def protected_class
-      protected_type.try(:constantize)
+    def defended_class
+      defended_type.try(:constantize)
     end
 
-    def protected
-      @protected ||= protected_class.new.tap do |protected|
-        if protected_id.present?
-          protected.id = protected_id
+    def defended
+      @defended ||= defended_class.new.tap do |defended|
+        if defended_id.present?
+          defended.id = defended_id
         end
 
-        if protected_attributes.present?
-          protected.assign_attributes protected_attributes
+        if defended_attributes.present?
+          defended.assign_attributes defended_attributes
         end
 
-        protected.authorize_access!
+        defended.authorize_access!
       end
     end
 
-    def protected=(protected)
-      self.protected_id = protected.try(:id)
-      self.protected_type = protected.try(:class).try(:name)
-      self.protected_attributes = protected.try(:attributes)
+    def defended=(defended)
+      self.defended_id = defended.try(:id)
+      self.defended_type = defended.try(:class).try(:name)
+      self.defended_attributes = defended.try(:attributes)
 
-      @protected = protected
+      @defended = defended
     end
 
-    def protected_attributes
-      JSON.parse(serialized_protected_attributes) if serialized_protected_attributes.present?
+    def defended_attributes
+      JSON.parse(serialized_defended_attributes) if serialized_defended_attributes.present?
     end
 
-    def protected_attributes=(protected_attributes)
-      self.serialized_protected_attributes = protected_attributes.try(:to_json)
+    def defended_attributes=(defended_attributes)
+      self.serialized_defended_attributes = defended_attributes.try(:to_json)
     end
 
     validate :not_changed
-    validates :agent_type, :protected_type, :protected_attributes, :action_type, :performed_at, presence: true
+    validates :agent_type, :defended_type, :defended_attributes, :action_type, :performed_at, presence: true
 
-    scope :with_protected, -> (protected) { where(protected_type: protected.class.name, protected_id: protected.id) }
+    scope :with_defended, -> (defended) { where(defended_type: defended.class.name, defended_id: defended.id) }
 
     class << self
       def bulk_insert(actions)

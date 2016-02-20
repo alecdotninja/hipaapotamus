@@ -4,7 +4,7 @@ require 'spec_helper'
 describe Hipaapotamus::AccountabilityContext do
   let(:agent) { User.create! }
   let(:accountability_context) { Hipaapotamus::AccountabilityContext.new(agent) }
-  let(:protected) { Hipaapotamus.without_accountability { MedicalSecret.create! } }
+  let(:defended) { Hipaapotamus.without_accountability { MedicalSecret.create! } }
 
   describe '#initialize' do
     it 'has a passed in agent' do
@@ -23,8 +23,8 @@ describe Hipaapotamus::AccountabilityContext do
     end
 
     context 'without a valid agent' do
-      it 'raises an AccountabilityError' do
-        expect { Hipaapotamus::AccountabilityContext.new(protected) }.to raise_error(AccountabilityError)
+      it 'raises an Hipaapotamus::AccountabilityError' do
+        expect { Hipaapotamus::AccountabilityContext.new(defended) }.to raise_error(Hipaapotamus::AccountabilityError)
       end
     end
   end
@@ -32,10 +32,10 @@ describe Hipaapotamus::AccountabilityContext do
   describe '#record_action' do
     it 'stores a passed in record in actions' do
       accountability_context.within do
-        accountability_context.record_action(protected, :creation)
+        accountability_context.record_action(defended, :creation)
       end
 
-      expect(accountability_context.send(:actions).map { |h| h.slice(:protected_id, :protected_type) }).to include(protected_id: protected.id, protected_type: protected.class.name)
+      expect(accountability_context.send(:actions).map { |h| h.slice(:defended_id, :defended_type) }).to include(defended_id: defended.id, defended_type: defended.class.name)
     end
   end
 
@@ -79,8 +79,8 @@ describe Hipaapotamus::AccountabilityContext do
     end
 
     context 'outside of an accountability_context' do
-      it 'raises an AccountabilityError' do
-        expect { Hipaapotamus::AccountabilityContext.current! }.to raise_error(AccountabilityError)
+      it 'raises an Hipaapotamus::AccountabilityError' do
+        expect { Hipaapotamus::AccountabilityContext.current! }.to raise_error(Hipaapotamus::AccountabilityError)
       end
     end
   end

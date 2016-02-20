@@ -1,3 +1,5 @@
+require 'hipaapotamus'
+require 'hipaapotamus/action'
 require 'hipaapotamus/accountability_error'
 
 module Hipaapotamus
@@ -21,10 +23,10 @@ module Hipaapotamus
     end
 
     # noinspection RubyArgCount
-    def record_action(protected, action_type, transactional = false)
+    def record_action(defended, action_type, transactional = false)
       action = Action.new(
         agent: agent,
-        protected: protected,
+        defended: defended,
         action_type: action_type,
         source_transaction_state: Hipaapotamus.current_transaction_state,
         is_transactional: transactional,
