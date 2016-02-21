@@ -10,6 +10,11 @@ module Hipaapotamus
       alias_method :controller_class, :defended_class
     end
 
+
+    if defined?(Rails)
+      include Rails.application.helpers
+    end
+
     private
 
     def params

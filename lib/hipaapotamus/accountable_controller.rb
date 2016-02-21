@@ -73,16 +73,18 @@ module Hipaapotamus
           path = target
           options ||= {}
 
-          query_params = Rack::Utils.parse_query URI.parse(path).query
-          route_params = Rails.application.routes.recognize_path path, options
+          if defined?(Rails)
+            query_params = Rack::Utils.parse_query URI.parse(path).query
+            route_params = Rails.application.routes.recognize_path path, options
 
-          controller_class_name = "#{route_params[:controller].camelize}Controller"
-          controller_class = controller_class_name.constantize
-          controller = controller_class.new
+            controller_class_name = "#{route_params[:controller].camelize}Controller"
+            controller_class = controller_class_name.constantize
+            controller = controller_class.new
 
-          controller.params = ActionController::Parameters.new query_params.merge(route_params)
+            controller.params = ActionController::Parameters.new query_params.merge(route_params)
 
-          controller.policy
+            controller.policy
+          end
       end
     end
 
