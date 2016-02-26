@@ -11,9 +11,9 @@ module Hipaapotamus
     end
 
 
-    if defined?(Rails)
-      include Rails.application.helpers
-    end
+    # if defined?(Rails)
+    #   include Rails.application.helpers
+    # end
 
     private
 
