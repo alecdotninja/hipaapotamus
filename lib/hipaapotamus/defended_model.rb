@@ -38,7 +38,7 @@ module Hipaapotamus
     end
 
     def permitted_attributes
-      policy.permitted_attributes
+      policy.resolve_permitted_attributes
     end
 
     protected
