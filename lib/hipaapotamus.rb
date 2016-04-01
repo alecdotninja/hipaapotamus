@@ -68,5 +68,71 @@ module Hipaapotamus
     def without_accountability(&block)
       with_accountability(AnonymousAgent.instance, &block)
     end
+
+    def policy(target = self, options = nil)
+      case target
+        when Class
+          defended_class = target
+
+          if defended_class < Defended
+            policy defended_class.new
+          end
+        when Defended
+          defended = target
+
+          unless options
+            defended.class.policy(defended)
+          end
+        when Symbol
+          route_name = target
+
+          if Rails.application.routes.named_routes.get(route_name)
+            request_options = options.extract!(:method)
+
+            path = if options
+                     public_send("#{route_name}_path", options)
+                   else
+                     public_send("#{route_name}_path")
+                   end
+
+            policy path, request_options
+          end
+        when Hash
+          route_description = target
+          options ||= {}
+
+          request_options = target.extract!(:method)
+
+          policy url_for(route_description), request_options.merge(options)
+        when String
+          path = target
+          options ||= {}
+
+          if defined?(Rails)
+            query_params = Rack::Utils.parse_query URI.parse(path).query
+            route_params = Rails.application.routes.recognize_path path, options
+
+            controller_class_name = "#{route_params[:controller].camelize}Controller"
+            controller_class = controller_class_name.constantize
+            controller = controller_class.new
+
+            controller.params = ActionController::Parameters.new query_params.merge(route_params)
+
+            controller.policy
+          end
+      end
+    end
+
+    def access_path?(path, via = :get)
+      _policy = policy(path, method: via)
+
+      if _policy
+        action = _policy.controller.params[:action]
+
+        _policy.authorized?(action)
+      else
+        true
+      end
+    end
   end
 end
